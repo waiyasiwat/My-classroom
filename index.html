@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบจองที่นั่งและกองกลางห้อง ม.ต้น</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Prompt', sans-serif; }
+    </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800 flex flex-col">
+
+    <!-- Top Navigation -->
+    <header class="bg-blue-900 text-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-700 p-2 rounded-lg"><i class="fa-solid fa-school text-xl"></i></div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">ระบบจองที่นั่ง & กองกลาง ม.ต้น</h1>
+                    <p class="text-xs text-blue-200">จัดการที่นั่ง 54 ช่อง (เลขที่ 1-53 และช่องเสริม) + ระบบเงินห้อง</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="openCloudModal()" class="bg-blue-800 hover:bg-blue-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-blue-600 flex items-center space-x-1 transition">
+                    <i class="fa-solid fa-cloud"></i>
+                    <span id="cloudStatusText">เชื่อมต่อ Cloud</span>
+                </button>
+                <div id="authNavArea" class="flex items-center space-x-2">
+                    <!-- Dynamic Auth Buttons -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6">
+        
+        <!-- Welcome Banner / Status Bar -->
+        <div class="bg-white rounded-2xl shadow-sm p-4 mb-6 flex flex-col sm:flex-row justify-between items-center border border-slate-200 gap-4">
+            <div class="flex items-center space-x-3">
+                <div id="userAvatar" class="w-12 h-12 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-lg">
+                    <i class="fa-solid fa-user"></i>
+                </div>
+                <div>
+                    <h2 id="userNameDisplay" class="font-bold text-slate-700 text-base">ยังไม่ได้เข้าสู่ระบบ</h2>
+                    <p id="userRoleDisplay" class="text-xs text-slate-500">กรุณาเข้าสู่ระบบหรือสมัครสมาชิกเพื่อจองที่นั่ง</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2 w-full sm:w-auto justify-end">
+                <button onclick="switchTab('seats')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium shadow-sm transition flex items-center space-x-1">
+                    <i class="fa-solid fa-chair"></i><span>ผังที่นั่ง</span>
+                </button>
+                <button onclick="switchTab('fund')" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-medium shadow-sm transition flex items-center space-x-1">
+                    <i class="fa-solid fa-wallet"></i><span>กองกลางห้อง</span>
+                </button>
+                <button id="teacherTabBtn" onclick="switchTab('teacher')" class="hidden px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-medium shadow-sm transition flex items-center space-x-1">
+                    <i class="fa-solid fa-chalkboard-user"></i><span>ระบบครู</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Tab 1: Seating Management -->
+        <div id="tabSeats" class="space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <div>
+                        <h3 class="font-bold text-xl text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-chair text-blue-600"></i>
+                            <span>ผังห้องเรียน ม.ต้น (แนวตั้ง 4 แถว 2-2)</span>
+                        </h3>
+                        <p class="text-sm text-slate-500 mt-1">คลิกที่นั่งว่างเพื่อจองที่นั่งของคุณ (เลขที่ 24 และช่องเสริม 54 สามารถกดจองได้ปกติ)</p>
+                    </div>
+                    <div class="flex items-center space-x-3 text-xs bg-slate-50 p-2 rounded-xl border border-slate-200">
+                        <span class="flex items-center space-x-1"><span class="w-3 h-3 bg-emerald-500 rounded-full inline-block"></span><span>ว่าง</span></span>
+                        <span class="flex items-center space-x-1"><span class="w-3 h-3 bg-blue-600 rounded-full inline-block"></span><span>ที่นั่งของคุณ</span></span>
+                        <span class="flex items-center space-x-1"><span class="w-3 h-3 bg-amber-500 rounded-full inline-block"></span><span>ถูกจองแล้ว</span></span>
+                    </div>
+                </div>
+
+                <!-- Classroom Blackboard -->
+                <div class="w-full bg-slate-800 text-white text-center py-2 rounded-xl font-semibold text-sm tracking-wider mb-8 shadow-inner">
+                    <i class="fa-solid fa-chalkboard mr-2"></i> กระดานหน้าห้องเรียน
+                </div>
+
+                <!-- Seating Grid Container -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-6xl mx-auto" id="seatingGridContainer">
+                    <!-- Rendered by JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Classroom Fund (กองกลาง) -->
+        <div id="tabFund" class="hidden space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Fund Summary Card -->
+                <div class="bg-gradient-to-br from-emerald-600 to-teal-700 rounded-2xl shadow-md p-6 text-white flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-xs uppercase tracking-wider bg-emerald-500/30 px-3 py-1 rounded-full font-medium">กองกลางห้องเรียน</span>
+                            <i class="fa-solid fa-wallet text-2xl opacity-80"></i>
+                        </div>
+                        <h3 class="text-3xl font-bold mb-1" id="totalFundAmount">฿0.00</h3>
+                        <p class="text-emerald-100 text-sm">ยอดเงินสะสมที่ได้รับการอนุมัติแล้ว</p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-emerald-500/30 flex justify-between text-xs">
+                        <span>ชำระแล้ว: <strong id="paidCount">0</strong> คน</span>
+                        <span>ยังไม่ชำระ: <strong id="unpaidCount">54</strong> คน</span>
+                    </div>
+                </div>
+
+                <!-- QR Payment Card -->
+                <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200 md:col-span-2 flex flex-col justify-between">
+                    <div>
+                        <h3 class="font-bold text-lg text-slate-800 mb-2 flex items-center space-x-2">
+                            <i class="fa-solid fa-qrcode text-emerald-600"></i>
+                            <span>ชำระเงินกองกลาง / ส่งสลิปโอนเงิน</span>
+                        </h3>
+                        <p class="text-sm text-slate-500 mb-4">โอนเงินผ่าน QR Code พร้อมเพย์ห้อง แล้วอัปโหลดสลิปเพื่อให้ครูตรวจสอบ</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div class="text-center">
+                            <div class="bg-white p-3 rounded-xl inline-block shadow-sm border border-slate-200">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=0812345678" alt="QR Code" class="w-36 h-36 mx-auto">
+                            </div>
+                            <p class="text-xs font-semibold text-slate-600 mt-2">พร้อมเพย์: 081-234-5678 (บัญชีห้อง ม.ต้น)</p>
+                        </div>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">แนบสลิปการโอนเงิน</label>
+                                <input type="file" id="slipFileInput" accept="image/*" class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-600 mb-1">จำนวนเงิน (บาท)</label>
+                                <input type="number" id="slipAmountInput" placeholder="เช่น 100" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            </div>
+                            <button onclick="submitPaymentSlip()" class="w-full py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold shadow-sm transition">
+                                <i class="fa-solid fa-paper-plane mr-1"></i> ส่งสลิปแจ้งชำระเงิน
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Status Table -->
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <h3 class="font-bold text-lg text-slate-800 mb-4 flex items-center space-x-2">
+                    <i class="fa-solid fa-list-check text-emerald-600"></i>
+                    <span>สถานะการชำระเงินรายบุคคล (54 ช่อง)</span>
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-xs text-slate-500 uppercase">
+                                <th class="py-3 px-4">เลขที่</th>
+                                <th class="py-3 px-4">ชื่อ - นามสกุล</th>
+                                <th class="py-3 px-4">สถานะการชำระ</th>
+                                <th class="py-3 px-4">จำนวนเงิน</th>
+                                <th class="py-3 px-4">สลิป</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fundStatusTableBody" class="text-sm divide-y divide-slate-100">
+                            <!-- Rendered by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Teacher Dashboard -->
+        <div id="tabTeacher" class="hidden space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="font-bold text-xl text-slate-800 flex items-center space-x-2">
+                            <i class="fa-solid fa-chalkboard-user text-purple-600"></i>
+                            <span>แผงควบคุมคุณครู (Teacher Dashboard)</span>
+                        </h3>
+                        <p class="text-sm text-slate-500 mt-1">ตรวจสอบสลิปการโอนเงิน และจัดการข้อมูลนักเรียน</p>
+                    </div>
+                    <button onclick="resetAllData()" class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 rounded-xl text-xs font-semibold border border-rose-200 transition">
+                        <i class="fa-solid fa-rotate-right mr-1"></i> รีเซ็ตข้อมูลทั้งหมด
+                    </button>
+                </div>
+
+                <h4 class="font-bold text-base text-slate-700 mb-3">รายการสลิปรอตรวจสอบ</h4>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-slate-200 text-xs text-slate-500 uppercase">
+                                <th class="py-3 px-4">เลขที่ / ชื่อ</th>
+                                <th class="py-3 px-4">จำนวนเงิน</th>
+                                <th class="py-3 px-4">รูปสลิป</th>
+                                <th class="py-3 px-4">การจัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="teacherSlipsTableBody" class="text-sm divide-y divide-slate-100">
+                            <!-- Rendered by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Auth Modal (Login / Register) -->
+    <div id="authModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 space-y-6 relative">
+            <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div class="text-center">
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 text-xl font-bold">
+                    <i class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <h3 class="font-bold text-xl text-slate-800" id="authModalTitle">เข้าสู่ระบบนักเรียน</h3>
+                <p class="text-xs text-slate-500 mt-1">เลือกบทบาทและกรอกข้อมูลเพื่อใช้งานระบบ</p>
+            </div>
+
+            <!-- Role Switcher -->
+            <div class="flex bg-slate-100 p-1 rounded-xl">
+                <button onclick="setAuthRole('student')" id="roleBtnStudent" class="flex-1 py-2 text-xs font-semibold rounded-lg bg-white text-blue-600 shadow-sm transition">นักเรียน</button>
+                <button onclick="setAuthRole('teacher')" id="roleBtnTeacher" class="flex-1 py-2 text-xs font-semibold rounded-lg text-slate-600 transition">คุณครู</button>
+            </div>
+
+            <div class="space-y-4" id="studentAuthForm">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">เลือกเลขที่ (1 - 54)</label>
+                    <select id="authStudentNumber" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">ชื่อ - นามสกุล</label>
+                    <input type="text" id="authStudentName" placeholder="เช่น ด.ช. รักเรียน เพียรศึกษา" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button onclick="handleStudentLogin()" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-semibold shadow-sm transition">
+                    เข้าสู่ระบบ / ลงทะเบียน
+                </button>
+            </div>
+
+            <div class="space-y-4 hidden" id="teacherAuthForm">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">รหัสผ่านคุณครู</label>
+                    <input type="password" id="teacherPasswordInput" placeholder="รหัสผ่าน (ค่าเริ่มต้น: admin123)" class="w-full px-3 py-2 text-sm border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500">
+                </div>
+                <button onclick="handleTeacherLogin()" class="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-sm font-semibold shadow-sm transition">
+                    เข้าสู่ระบบคุณครู
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cloud Connection Setup Modal -->
+    <div id="cloudModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full p-6 space-y-6 relative">
+            <button onclick="closeCloudModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <div>
+                <h3 class="font-bold text-xl text-slate-800 flex items-center space-x-2">
+                    <i class="fa-solid fa-cloud text-blue-600"></i>
+                    <span>ตั้งค่าการเชื่อมต่อ Cloud (Firebase)</span>
+                </h3>
+                <p class="text-xs text-slate-500 mt-1">ใส่ Firebase Config ของคุณเพื่อให้ข้อมูลซิงก์แบบเรียลไทม์ข้ามอุปกรณ์ หากเว้นว่าง ระบบจะใช้ LocalStorage อัตโนมัติ</p>
+            </div>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-600 mb-1">Firebase Config (JSON หรือ JavaScript Object)</label>
+                    <textarea id="firebaseConfigInput" rows="6" placeholder='{ "apiKey": "...", "authDomain": "...", "projectId": "...", "storageBucket": "...", "messagingSenderId": "...", "appId": "..." }' class="w-full px-3 py-2 text-xs font-mono border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                </div>
+                <div class="flex space-x-2">
+                    <button onclick="saveCloudConfig()" class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition">บันทึกและเชื่อมต่อ</button>
+                    <button onclick="clearCloudConfig()" class="py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-semibold transition">ใช้โหมดท้องถิ่น</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        let currentUser = JSON.parse(localStorage.getItem('school_current_user')) || null;
+        let activeTab = 'seats';
+        let authRole = 'student';
+        const TOTAL_SEATS = 54;
+
+        let seatsData = JSON.parse(localStorage.getItem('school_seats_data')) || {};
+        let fundData = JSON.parse(localStorage.getItem('school_fund_data')) || {};
+
+        for (let i = 1; i <= TOTAL_SEATS; i++) {
+            if (!seatsData[i]) {
+                seatsData[i] = { studentNumber: null, studentName: null, status: 'empty' };
+            }
+            if (!fundData[i]) {
+                fundData[i] = { paid: false, amount: 0, slipUrl: null, status: 'unpaid' };
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            populateStudentNumberSelect();
+            updateAuthNav();
+            renderSeatingGrid();
+            renderFundTable();
+            renderTeacherDashboard();
+            updateFundSummary();
+        });
+
+        function populateStudentNumberSelect() {
+            const select = document.getElementById('authStudentNumber');
+            select.innerHTML = '';
+            for (let i = 1; i <= TOTAL_SEATS; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = `เลขที่ ${i}` + (i === 24 ? ' (ลาออก)' : i === 54 ? ' (ช่องเสริม)' : '');
+                select.appendChild(opt);
+            }
+        }
+
+        function switchTab(tab) {
+            activeTab = tab;
+            document.getElementById('tabSeats').classList.add('hidden');
+            document.getElementById('tabFund').classList.add('hidden');
+            document.getElementById('tabTeacher').classList.add('hidden');
+
+            if (tab === 'seats') document.getElementById('tabSeats').classList.remove('hidden');
+            if (tab === 'fund') document.getElementById('tabFund').classList.remove('hidden');
+            if (tab === 'teacher') {
+                if (!currentUser || currentUser.role !== 'teacher') {
+                    alert('กรุณาเข้าสู่ระบบในฐานะคุณครู');
+                    openAuthModal();
+                    return;
+                }
+                document.getElementById('tabTeacher').classList.remove('hidden');
+                renderTeacherDashboard();
+            }
+        }
+
+        function updateAuthNav() {
+            const area = document.getElementById('authNavArea');
+            const avatar = document.getElementById('userAvatar');
+            const nameDisp = document.getElementById('userNameDisplay');
+            const roleDisp = document.getElementById('userRoleDisplay');
+            const teacherBtn = document.getElementById('teacherTabBtn');
+
+            if (currentUser) {
+                avatar.innerHTML = `<i class="fa-solid ${currentUser.role === 'teacher' ? 'fa-chalkboard-user' : 'fa-user-graduate'}"></i>`;
+                nameDisp.textContent = currentUser.name;
+                roleDisp.textContent = currentUser.role === 'teacher' ? 'คุณครู (ผู้ดูแลระบบ)' : `นักเรียน เลขที่ ${currentUser.number}`;
+                
+                if (currentUser.role === 'teacher') {
+                    teacherBtn.classList.remove('hidden');
+                } else {
+                    teacherBtn.classList.add('hidden');
+                }
+
+                area.innerHTML = `
+                    <button onclick="logout()" class="bg-rose-600 hover:bg-rose-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1">
+                        <i class="fa-solid fa-right-from-bracket"></i><span>ออกจากระบบ</span>
+                    </button>
+                `;
+            } else {
+                avatar.innerHTML = `<i class="fa-solid fa-user"></i>`;
+                nameDisp.textContent = 'ยังไม่ได้เข้าสู่ระบบ';
+                roleDisp.textContent = 'กรุณาเข้าสู่ระบบหรือสมัครสมาชิก';
+                teacherBtn.classList.add('hidden');
+                area.innerHTML = `
+                    <button onclick="openAuthModal()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition flex items-center space-x-1">
+                        <i class="fa-solid fa-right-to-bracket"></i><span>เข้าสู่ระบบ</span>
+                    </button>
+                `;
+            }
+        }
+
+        function openAuthModal() { document.getElementById('authModal').classList.remove('hidden'); }
+        function closeAuthModal() { document.getElementById('authModal').classList.add('hidden'); }
+
+        function setAuthRole(role) {
+            authRole = role;
+            const rStudent = document.getElementById('roleBtnStudent');
+            const rTeacher = document.getElementById('roleBtnTeacher');
+            const fStudent = document.getElementById('studentAuthForm');
+            const fTeacher = document.getElementById('teacherAuthForm');
+            const title = document.getElementById('authModalTitle');
+
+            if (role === 'student') {
+                rStudent.className = "flex-1 py-2 text-xs font-semibold rounded-lg bg-white text-blue-600 shadow-sm transition";
+                rTeacher.className = "flex-1 py-2 text-xs font-semibold rounded-lg text-slate-600 transition";
+                fStudent.classList.remove('hidden');
+                fTeacher.classList.add('hidden');
+                title.textContent = "เข้าสู่ระบบนักเรียน";
+            } else {
+                rTeacher.className = "flex-1 py-2 text-xs font-semibold rounded-lg bg-white text-purple-600 shadow-sm transition";
+                rStudent.className = "flex-1 py-2 text-xs font-semibold rounded-lg text-slate-600 transition";
+                fTeacher.classList.remove('hidden');
+                fStudent.classList.add('hidden');
+                title.textContent = "เข้าสู่ระบบคุณครู";
+            }
+        }
+
+        function handleStudentLogin() {
+            const num = parseInt(document.getElementById('authStudentNumber').value);
+            const name = document.getElementById('authStudentName').value.trim();
+
+            if (!name) {
+                alert('กรุณากรอกชื่อ - นามสกุล');
+                return;
+            }
+
+            currentUser = { role: 'student', number: num, name: name };
+            localStorage.setItem('school_current_user', JSON.stringify(currentUser));
+            
+            closeAuthModal();
+            updateAuthNav();
+            renderSeatingGrid();
+            renderFundTable();
+            alert(`ยินดีต้อนรับ คุณ ${name} (เลขที่ ${num})`);
+        }
+
+        function handleTeacherLogin() {
+            const pass = document.getElementById('teacherPasswordInput').value;
+            if (pass === 'admin123' || pass === 'teacher123') {
+                currentUser = { role: 'teacher', name: 'คุณครูผู้ดูแล' };
+                localStorage.setItem('school_current_user', JSON.stringify(currentUser));
+                closeAuthModal();
+                updateAuthNav();
+                switchTab('teacher');
+                alert('เข้าสู่ระบบคุณครูสำเร็จ');
+            } else {
+                alert('รหัสผ่านคุณครูไม่ถูกต้อง (ค่าเริ่มต้น: admin123)');
+            }
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('school_current_user');
+            updateAuthNav();
+            switchTab('seats');
+            alert('ออกจากระบบเรียบร้อยแล้ว');
+        }
+
+        function renderSeatingGrid() {
+            const container = document.getElementById('seatingGridContainer');
+            container.innerHTML = '';
+
+            const colRanges = [
+                { start: 1, end: 14, title: 'แถวที่ 1 (14 ที่นั่ง)' },
+                { start: 15, end: 27, title: 'แถวที่ 2 (13 ที่นั่ง)' },
+                { start: 28, end: 40, title: 'แถวที่ 3 (13 ที่นั่ง)' },
+                { start: 41, end: 54, title: 'แถวที่ 4 (14 ที่นั่ง)' }
+            ];
+
+            colRanges.forEach((col) => {
+                const colDiv = document.createElement('div');
+                colDiv.className = "bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3";
+                
+                let html = `<div class="text-xs font-bold text-slate-500 uppercase text-center pb-2 border-b border-slate-200">${col.title}</div>`;
+                html += `<div class="grid grid-cols-2 gap-2">`;
+
+                for (let i = col.start; i <= col.end; i++) {
+                    const seat = seatsData[i];
+                    let bgClass = "bg-white border-slate-200 text-slate-700 hover:border-blue-400";
+                    let badgeText = `เลขที่ ${i}`;
+                    let statusLabel = "ว่าง";
+
+                    if (seat.studentNumber) {
+                        if (currentUser && currentUser.role === 'student' && seat.studentNumber === currentUser.number) {
+                            bgClass = "bg-blue-600 text-white border-blue-600 shadow-md";
+                            statusLabel = "ที่นั่งของคุณ";
+                        } else {
+                            bgClass = "bg-amber-50 text-amber-800 border-amber-300";
+                            statusLabel = seat.studentName || `เลขที่ ${seat.studentNumber}`;
+                        }
+                    }
+
+                    if (i === 24) badgeText = `24 (ลาออก)`;
+                    if (i === 54) badgeText = `54 (เสริม)`;
+
+                    html += `
+                        <div onclick="handleSeatClick(${i})" class="${bgClass} border rounded-xl p-2.5 text-center cursor-pointer transition flex flex-col justify-center items-center h-20">
+                            <span class="text-xs font-bold">${badgeText}</span>
+                            <span class="text-[10px] opacity-90 truncate max-w-full px-1 mt-1">${statusLabel}</span>
+                        </div>
+                    `;
+                }
+                html += `</div>`;
+                colDiv.innerHTML = html;
+                container.appendChild(colDiv);
+            });
+        }
+
+        function handleSeatClick(seatNumber) {
+            if (!currentUser || currentUser.role !== 'student') {
+                alert('กรุณาเข้าสู่ระบบในฐานะนักเรียนก่อนจองที่นั่ง');
+                openAuthModal();
+                return;
+            }
+
+            const seat = seatsData[seatNumber];
+
+            for (let s in seatsData) {
+                if (seatsData[s].studentNumber === currentUser.number && parseInt(s) !== seatNumber) {
+                    if (!confirm(`คุณได้จองที่นั่งเลขที่ ${s} ไปแล้ว ต้องการย้ายมาที่นั่ง ${seatNumber} หรือไม่?`)) {
+                        return;
+                    }
+                    seatsData[s] = { studentNumber: null, studentName: null, status: 'empty' };
+                }
+            }
+
+            if (seat.studentNumber && seat.studentNumber !== currentUser.number) {
+                alert('ที่นั่งนี้มีผู้จองแล้ว');
+                return;
+            }
+
+            if (seat.studentNumber === currentUser.number) {
+                if (confirm(`ต้องการยกเลิกการจองที่นั่ง ${seatNumber} หรือไม่?`)) {
+                    seatsData[seatNumber] = { studentNumber: null, studentName: null, status: 'empty' };
+                }
+            } else {
+                seatsData[seatNumber] = { studentNumber: currentUser.number, studentName: currentUser.name, status: 'booked' };
+            }
+
+            saveData();
+            renderSeatingGrid();
+        }
+
+        function submitPaymentSlip() {
+            if (!currentUser || currentUser.role !== 'student') {
+                alert('กรุณาเข้าสู่ระบบในฐานะนักเรียนเพื่อส่งสลิป');
+                openAuthModal();
+                return;
+            }
+
+            const amount = parseFloat(document.getElementById('slipAmountInput').value);
+            const fileInput = document.getElementById('slipFileInput');
+
+            if (!amount || amount <= 0) {
+                alert('กรุณากรอกจำนวนเงินให้ถูกต้อง');
+                return;
+            }
+
+            let slipUrl = "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=200";
+            if (fileInput.files && fileInput.files[0]) {
+                slipUrl = URL.createObjectURL(fileInput.files[0]);
+            }
+
+            fundData[currentUser.number] = {
+                paid: false,
+                amount: amount,
+                slipUrl: slipUrl,
+                status: 'pending',
+                studentName: currentUser.name
+            };
+
+            saveData();
+            renderFundTable();
+            renderTeacherDashboard();
+            alert('ส่งสลิปแจ้งชำระเงินเรียบร้อยแล้ว กรุณารอคุณครูตรวจสอบ');
+            document.getElementById('slipAmountInput').value = '';
+            document.getElementById('slipFileInput').value = '';
+        }
+
+        function renderFundTable() {
+            const tbody = document.getElementById('fundStatusTableBody');
+            tbody.innerHTML = '';
+
+            for (let i = 1; i <= TOTAL_SEATS; i++) {
+                const fund = fundData[i] || { paid: false, amount: 0, status: 'unpaid' };
+                let statusBadge = '<span class="px-2 py-1 bg-slate-100 text-slate-600 rounded-lg text-xs">ยังไม่ชำระ</span>';
+                
+                if (fund.status === 'pending') {
+                    statusBadge = '<span class="px-2 py-1 bg-amber-100 text-amber-700 rounded-lg text-xs font-medium">รอตรวจสอบ</span>';
+                } else if (fund.status === 'approved') {
+                    statusBadge = '<span class="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-medium">ชำระแล้ว (อนุมัติ)</span>';
+                }
+
+                tbody.innerHTML += `
+                    <tr class="hover:bg-slate-50">
+                        <td class="py-3 px-4 font-semibold">เลขที่ ${i}</td>
+                        <td class="py-3 px-4">${fund.studentName || '-'}</td>
+                        <td class="py-3 px-4">${statusBadge}</td>
+                        <td class="py-3 px-4">฿${fund.amount || 0}</td>
+                        <td class="py-3 px-4">
+                            ${fund.slipUrl ? `<a href="${fund.slipUrl}" target="_blank" class="text-blue-600 hover:underline text-xs"><i class="fa-solid fa-image mr-1"></i> ดูสลิป</a>` : '-'}
+                        </td>
+                    </tr>
+                `;
+            }
+            updateFundSummary();
+        }
+
+        function updateFundSummary() {
+            let total = 0;
+            let paidCount = 0;
+
+            for (let i = 1; i <= TOTAL_SEATS; i++) {
+                if (fundData[i] && fundData[i].status === 'approved') {
+                    total += fundData[i].amount;
+                    paidCount++;
+                }
+            }
+
+            document.getElementById('totalFundAmount').textContent = `฿${total.toLocaleString()}`;
+            document.getElementById('paidCount').textContent = paidCount;
+            document.getElementById('unpaidCount').textContent = TOTAL_SEATS - paidCount;
+        }
+
+        function renderTeacherDashboard() {
+            const tbody = document.getElementById('teacherSlipsTableBody');
+            tbody.innerHTML = '';
+            let hasPending = false;
+
+            for (let i = 1; i <= TOTAL_SEATS; i++) {
+                const fund = fundData[i];
+                if (fund && fund.status === 'pending') {
+                    hasPending = true;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="py-3 px-4 font-semibold">เลขที่ ${i} (${fund.studentName || 'นักเรียน'})</td>
+                            <td class="py-3 px-4">฿${fund.amount}</td>
+                            <td class="py-3 px-4">
+                                <a href="${fund.slipUrl}" target="_blank" class="text-blue-600 hover:underline text-xs"><i class="fa-solid fa-image mr-1"></i> ตรวจสอบสลิป</a>
+                            </td>
+                            <td class="py-3 px-4 space-x-2">
+                                <button onclick="approveSlip(${i})" class="px-3 py-1 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">อนุมัติ</button>
+                                <button onclick="rejectSlip(${i})" class="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-semibold shadow-sm transition">ปฏิเสธ</button>
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+
+            if (!hasPending) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-400 text-xs">ไม่มีสลิปรอตรวจสอบในขณะนี้</td></tr>`;
+            }
+        }
+
+        function approveSlip(seatNum) {
+            if (fundData[seatNum]) {
+                fundData[seatNum].status = 'approved';
+                fundData[seatNum].paid = true;
+                saveData();
+                renderFundTable();
+                renderTeacherDashboard();
+                alert(`อนุมัติสลิปของเลขที่ ${seatNum} เรียบร้อยแล้ว`);
+            }
+        }
+
+        function rejectSlip(seatNum) {
+            if (fundData[seatNum]) {
+                fundData[seatNum].status = 'unpaid';
+                fundData[seatNum].slipUrl = null;
+                fundData[seatNum].amount = 0;
+                saveData();
+                renderFundTable();
+                renderTeacherDashboard();
+                alert(`ปฏิเสธสลิปของเลขที่ ${seatNum} แล้ว`);
+            }
+        }
+
+        function resetAllData() {
+            if (confirm('คุณแน่ใจหรือไม่ที่จะรีเซ็ตข้อมูลที่นั่งและกองกลางทั้งหมด?')) {
+                localStorage.removeItem('school_seats_data');
+                localStorage.removeItem('school_fund_data');
+                location.reload();
+            }
+        }
+
+        function saveData() {
+            localStorage.setItem('school_seats_data', JSON.stringify(seatsData));
+            localStorage.setItem('school_fund_data', JSON.stringify(fundData));
+        }
+
+        function openCloudModal() { document.getElementById('cloudModal').classList.remove('hidden'); }
+        function closeCloudModal() { document.getElementById('cloudModal').classList.add('hidden'); }
+
+        function saveCloudConfig() {
+            const configText = document.getElementById('firebaseConfigInput').value.trim();
+            if (configText) {
+                localStorage.setItem('school_firebase_config', configText);
+                document.getElementById('cloudStatusText').textContent = 'Cloud เชื่อมต่อแล้ว';
+                alert('บันทึกการตั้งค่า Cloud เรียบร้อยแล้ว');
+            }
+            closeCloudModal();
+        }
+
+        function clearCloudConfig() {
+            localStorage.removeItem('school_firebase_config');
+            document.getElementById('cloudStatusText').textContent = 'เชื่อมต่อ Cloud';
+            document.getElementById('firebaseConfigInput').value = '';
+            alert('เปลี่ยนกลับมาใช้โหมดท้องถิ่นเรียบร้อยแล้ว');
+            closeCloudModal();
+        }
+    </script>
+</body>
+</html>
